@@ -8,7 +8,8 @@ export const helloRouter = createTRPCRouter({
         text: z.string(),
       }),
     )
-    .query((opts) => {
+    .query(async (opts) => {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       return {
         greeting: `hello ${opts.input.text}`,
       };

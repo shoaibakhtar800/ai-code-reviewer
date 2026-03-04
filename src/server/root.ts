@@ -5,8 +5,8 @@ import { healthRouter } from "./routers/health";
 import { helloRouter } from "./routers/hello";
 
 export const appRouter = createTRPCRouter({
-  health: healthRouter,
-  hello: helloRouter,
+  healthRouter,
+  helloRouter,
 });
 
 export type AppRouter = typeof appRouter;
