@@ -6,7 +6,7 @@ import {
 } from "@trpc/tanstack-react-query";
 import { cache } from "react";
 import { makeQueryClient } from "./query-client";
-import { appRouter } from "@/server/root";
+import { appRouter } from "@/server/_app";
 import { createTRPCContext } from "@/server/trpc";
 import { createTRPCClient, httpLink } from "@trpc/client";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
