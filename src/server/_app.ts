@@ -1,12 +1,10 @@
 import "server-only";
 
 import { createCallerFactory, createTRPCRouter } from "./trpc";
-import { healthRouter } from "./routers/health";
-import { helloRouter } from "./routers/hello";
+import { repositoryRouter } from "./routers/repository";
 
 export const appRouter = createTRPCRouter({
-  healthRouter,
-  helloRouter,
+  repository: repositoryRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -24,6 +24,9 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  repositories Repository[]
+  reviews      Review[]
+
   @@unique([email])
   @@map("user")
 }
@@ -74,4 +77,52 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Repository {
+  id        String   @id @default(cuid())
+  userId    String
+  githubId  Int      @unique
+  name      String
+  fullName  String
+  private   Boolean  @default(false)
+  htmlUrl   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews Review[]
+
+  @@map("repository")
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  repositoryId String
+  userId       String
+  prNumber     Int
+  prTitle      String
+  prUrl        String
+  status       ReviewStatus @default(PENDING)
+  summary      String?
+  riskScore    Int?
+  comments     Json?
+  error        String?      @db.Text
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([repositoryId])
+  @@index([userId])
+  @@index([status])
+  @@map("review")
+}
+
+enum ReviewStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
