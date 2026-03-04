@@ -9,14 +9,14 @@ const ubuntu = Ubuntu({
 });
 
 export const metadata: Metadata = {
-  title: "AI Code Reviewer",
+  title: "Sentinell",
   description: "Review your code with AI",
   icons: {
     icon: "/favicon.svg",
   },
 };
 
-import { TRPCReactProvider } from "@/trpc/client";
+import { Providers } from "@/components/providers";
 
 export default function RootLayout({
   children,
@@ -29,7 +29,7 @@ export default function RootLayout({
         className={`${ubuntu.className} antialiased`}
         suppressHydrationWarning
       >
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
