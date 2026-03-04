@@ -15,7 +15,7 @@ import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 export const getQueryClient = cache(makeQueryClient);
 
 export const trpc = createTRPCOptionsProxy({
-  ctx: createTRPCContext({ headers: new Headers() }),
+  ctx: await createTRPCContext({ headers: new Headers() }),
   router: appRouter,
   queryClient: getQueryClient,
 });
