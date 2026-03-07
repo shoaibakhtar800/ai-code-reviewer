@@ -1,11 +1,10 @@
 import { useTRPC } from "@/trpc/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 export const useGetRepos = () => {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
 
   const query = useQuery(trpc.repository.getRepos.queryOptions());
 
@@ -15,11 +14,5 @@ export const useGetRepos = () => {
     }
   }, [query.isError]);
 
-  const invalidate = useCallback(() => {
-    return queryClient.invalidateQueries({
-      queryKey: trpc.repository.getRepos.queryKey(),
-    });
-  }, [queryClient, trpc]);
-
-  return { ...query, invalidate };
+  return query;
 };

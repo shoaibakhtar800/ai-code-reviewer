@@ -45,7 +45,7 @@ export async function fetchGitHubRepos(token: string): Promise<GitHubRepo[]> {
 
     while (true) {
       const response = await fetch(
-        `https://api.github.com/user/repos?per_page=${perPage}&page=${page}&sort=updated`,
+        `https://api.github.com/user/repos?per_page=${perPage}&page=${page}&sort=updated&visibility=all`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

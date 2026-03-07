@@ -1,0 +1,18 @@
+export const languageColors: Record<string, string> = {
+  TypeScript: "bg-blue-500",
+  JavaScript: "bg-yellow-400",
+  Python: "bg-green-500",
+  Go: "bg-cyan-500",
+  Rust: "bg-orange-500",
+  Java: "bg-red-500",
+  Ruby: "bg-red-400",
+  PHP: "bg-purple-500",
+  "C#": "bg-green-600",
+  "C++": "bg-pink-500",
+  C: "bg-gray-500",
+  Swift: "bg-orange-400",
+  Kotlin: "bg-purple-400",
+  Dart: "bg-blue-400",
+  Vue: "bg-emerald-500",
+  Svelte: "bg-orange-600",
+};
