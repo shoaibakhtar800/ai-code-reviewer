@@ -33,7 +33,7 @@ export const repositoryRouter = createTRPCRouter({
 
     const repos = await fetchGitHubRepos(accessToken);
     return repos.map((repo) => ({
-      id: repo.id,
+      githubId: repo.id,
       name: repo.name,
       fullName: repo.full_name,
       private: repo.private,
