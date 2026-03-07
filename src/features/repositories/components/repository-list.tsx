@@ -1,10 +1,22 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  CheckCircleIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  SearchIcon,
+  XIcon,
+} from "lucide-react";
 import { useState } from "react";
-import { useGetRepos } from "../hooks/use-get-repos";
-import { useFetchGithubRepos } from "../hooks/use-fetch-github-repos";
 import { useConnectRepos } from "../hooks/use-connect-repos";
 import { useDisconnectRepos } from "../hooks/use-disconnect-repos";
+import { useFetchGithubRepos } from "../hooks/use-fetch-github-repos";
+import { useGetRepos } from "../hooks/use-get-repos";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
 interface GitHubRepo {
   id: number;
@@ -54,9 +66,14 @@ export const RepositoryList = ({ user }: RepositoryListProps) => {
   const [showGithubRepos, setShowGithubRepos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: connectedRepos, isLoading } = useGetRepos();
-  const { data: githubRepos, invalidate } =
-    useFetchGithubRepos(showGithubRepos);
+  const { data: connectedRepos } = useGetRepos();
+  const {
+    data: githubRepos,
+    refetch,
+    isFetching: isFetchingGithubRepos,
+    isLoading: isLoadingGithubRepos,
+    error: githubReposError,
+  } = useFetchGithubRepos(showGithubRepos);
 
   const connectMutation = useConnectRepos();
   const disconnectMutation = useDisconnectRepos();
@@ -98,7 +115,6 @@ export const RepositoryList = ({ user }: RepositoryListProps) => {
         onSuccess: () => {
           setSelectedRepos(new Set());
           setShowGithubRepos(false);
-          invalidate();
         },
       },
     );
@@ -116,7 +132,165 @@ export const RepositoryList = ({ user }: RepositoryListProps) => {
 
   return (
     <div className="space-y-8">
-      <div></div>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Repositories
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Select repositories to connect to your account.
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setShowGithubRepos(!showGithubRepos);
+            setSelectedRepos(new Set());
+            setSearchQuery("");
+          }}
+          variant={showGithubRepos ? "outline" : "default"}
+        >
+          {showGithubRepos ? (
+            <>
+              <XIcon className="size-4" />
+              Close
+            </>
+          ) : (
+            <>
+              <PlusIcon className="size-4" />
+              Add Repository
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Show Github Repositories */}
+      {showGithubRepos && (
+        <Card className="overflow-hidden">
+          <div className="border-b border-border/60 bg-muted/30 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold">Github Repositories</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Select repositories to connect to your account.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => refetch()}
+                disabled={isFetchingGithubRepos}
+              >
+                <RefreshCwIcon
+                  className={cn(
+                    "size-4",
+                    isFetchingGithubRepos && "animate-spin",
+                  )}
+                />
+              </Button>
+            </div>
+          </div>
+
+          <CardContent className="p-0">
+            {isLoadingGithubRepos ? (
+              <div>
+                {[...Array(10)].map((_, index) => (
+                  <Skeleton key={index} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : githubReposError ? (
+              <div>
+                {githubReposError.data?.code === "PRECONDITION_FAILED" ? (
+                  <Button>Connect</Button>
+                ) : (
+                  <div>
+                    <p className="text-center text-red-500">
+                      {githubReposError.message}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : availableRepos?.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2">
+                <CheckCircleIcon className="size-12 text-green-500" />
+                <p className="text-center text-muted-foreground">
+                  All caught up!
+                </p>
+                <p className="text-center text-muted-foreground">
+                  All your repositories are up to date.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <SearchIcon className="size-4" />
+                    <Input
+                      placeholder="Search repositories"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button>Select All</button>
+                    {selectedRepos.size > 0 && (
+                      <>
+                        <span>.</span>
+                        <span>Clear Selection</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="max-h-[400px] overflow-y-auto">
+                  {filteredAvailableRepos?.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p>No repositories found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredAvailableRepos?.map((repo) => (
+                        <div key={repo.githubId}>
+                          <p>{repo.name}</p>
+                          <p>{repo.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between border-t border-border/60 bg-muted/20 px-6 py-4">
+                  <p className="text-sm text-muted-foreground">
+                    {selectedRepos.size} repositories selected of{" "}
+                    {filteredAvailableRepos?.length || 0}
+                  </p>
+                  <Button
+                    onClick={handleConnect}
+                    disabled={
+                      connectMutation.isPending || selectedRepos.size === 0
+                    }
+                    size="sm"
+                  >
+                    {connectMutation.isPending ? (
+                      <>
+                        <RefreshCwIcon className="mr-2 size-4 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        Connect
+                        {selectedRepos.size > 0 && (
+                          <span className="ml-1.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px] font-medium transition-colors group-hover:bg-primary-foreground/30">
+                            {selectedRepos.size}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
