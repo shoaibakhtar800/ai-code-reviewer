@@ -22,7 +22,8 @@ interface ConnectedGithubRepo {
   updatedAt: Date;
   userId: string;
   name: string;
-  githubId: number;
+  externalId: string;
+  provider: string;
   fullName: string;
   private: boolean;
   htmlUrl: string;

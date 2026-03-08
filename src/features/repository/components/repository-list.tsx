@@ -12,7 +12,7 @@ import {
 import { useState } from "react";
 import { useConnectRepos } from "../hooks/use-connect-repos";
 import { useDisconnectRepos } from "../hooks/use-disconnect-repos";
-import { useFetchGithubRepos } from "../hooks/use-fetch-github-repos";
+import { useFetchProviderRepos } from "../hooks/use-fetch-provider-repos";
 import { useGetRepos } from "../hooks/use-get-repos";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ import { RepositoryConnectedCard } from "./repository-connected-card";
 import { ConnectGithub } from "@/components/connect-github";
 
 export const RepositoryList = () => {
-  const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set());
+  const [selectedRepos, setSelectedRepos] = useState<Set<string>>(new Set());
   const [showGithubRepos, setShowGithubRepos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -36,17 +36,17 @@ export const RepositoryList = () => {
     isFetching: isFetchingGithubRepos,
     isLoading: isLoadingGithubRepos,
     error: githubReposError,
-  } = useFetchGithubRepos(showGithubRepos);
+  } = useFetchProviderRepos(showGithubRepos);
 
   const connectMutation = useConnectRepos();
   const disconnectMutation = useDisconnectRepos();
 
   const connectedIds = new Set(
-    connectedRepos?.map((repo) => repo.githubId) || [],
+    connectedRepos?.map((repo) => repo.externalId) || [],
   );
 
   const availableRepos = githubRepos?.filter(
-    (repo) => !connectedIds.has(repo.githubId),
+    (repo) => !connectedIds.has(repo.externalId),
   );
 
   const filteredAvailableRepos = availableRepos?.filter((repo) => {
@@ -57,19 +57,19 @@ export const RepositoryList = () => {
     );
   });
 
-  const toggleRepo = (githubId: number) => {
+  const toggleRepo = (externalId: string) => {
     const next = new Set(selectedRepos);
-    if (next.has(githubId)) {
-      next.delete(githubId);
+    if (next.has(externalId)) {
+      next.delete(externalId);
     } else {
-      next.add(githubId);
+      next.add(externalId);
     }
     setSelectedRepos(next);
   };
 
   const handleConnect = () => {
     const reposToConnect = availableRepos?.filter((repo) =>
-      selectedRepos.has(repo.githubId),
+      selectedRepos.has(repo.externalId),
     );
     if (!reposToConnect) return;
     connectMutation.mutate(
@@ -91,7 +91,7 @@ export const RepositoryList = () => {
 
   const selectAll = () => {
     setSelectedRepos(
-      new Set(filteredAvailableRepos?.map((repo) => repo.githubId)),
+      new Set(filteredAvailableRepos?.map((repo) => repo.externalId)),
     );
   };
 
@@ -107,7 +107,7 @@ export const RepositoryList = () => {
             Repositories
           </h1>
           <p className="text-muted-foreground mt-1">
-            Select repositories to connect to your account.
+            Select repositories to connect to your account
           </p>
         </div>
         <Button
@@ -240,10 +240,10 @@ export const RepositoryList = () => {
                     <div className="divide-y divide-border/60">
                       {filteredAvailableRepos?.map((repo) => (
                         <RepositorySelectItem
-                          key={repo.githubId}
+                          key={repo.externalId}
                           repo={repo}
-                          selected={selectedRepos.has(repo.githubId)}
-                          onToggle={() => toggleRepo(repo.githubId)}
+                          selected={selectedRepos.has(repo.externalId)}
+                          onToggle={() => toggleRepo(repo.externalId)}
                         />
                       ))}
                     </div>
@@ -326,7 +326,7 @@ export const RepositoryList = () => {
           <div className="grid gap-3 sm:grid-cols-2">
             {connectedRepos?.map((repo) => (
               <RepositoryConnectedCard
-                key={repo.githubId}
+                key={repo.externalId}
                 repo={repo}
                 onDisconnect={handleDisconnect}
                 isDisconnecting={disconnectMutation.isPending}

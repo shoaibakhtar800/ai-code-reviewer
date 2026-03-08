@@ -3,17 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-export const useFetchGithubRepos = (enabled: boolean) => {
+export const useFetchProviderRepos = (enabled: boolean) => {
   const trpc = useTRPC();
 
   const query = useQuery({
-    ...trpc.repository.fetchFromGithub.queryOptions(),
+    ...trpc.repository.fetchFromProvider.queryOptions(),
     enabled,
   });
 
   useEffect(() => {
     if (query.isError) {
-      toast.error("Failed to fetch GitHub repositories");
+      toast.error("Failed to fetch repositories");
     }
   }, [query.isError]);
 

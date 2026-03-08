@@ -1,5 +1,6 @@
 export interface GitHubRepo {
-  githubId: number;
+  externalId: string;
+  provider: "github";
   name: string;
   fullName: string;
   private: boolean;

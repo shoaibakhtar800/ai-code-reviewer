@@ -2,7 +2,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { fetchGitHubRepos, getGitHubAccessToken } from "@/lib/github";
+import { getAccessToken, fetchRepositories } from "@/lib/providers/index";
 import {
   connectRepositorySchema,
   disconnectRepositorySchema,
@@ -21,28 +21,18 @@ export const repositoryRouter = createTRPCRouter({
     return repos;
   }),
 
-  fetchFromGithub: protectedProcedure.query(async ({ ctx }) => {
-    const accessToken = await getGitHubAccessToken(ctx.user.id);
+  fetchFromProvider: protectedProcedure.query(async ({ ctx }) => {
+    const accessToken = await getAccessToken(ctx.user.id, "github");
 
     if (!accessToken) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "No GitHub access token found",
+        message: "No access token found",
       });
     }
 
-    const repos = await fetchGitHubRepos(accessToken);
-    return repos.map((repo) => ({
-      githubId: repo.id,
-      name: repo.name,
-      fullName: repo.full_name,
-      private: repo.private,
-      htmlUrl: repo.html_url,
-      description: repo.description,
-      language: repo.language,
-      stars: repo.stargazers_count,
-      updatedAt: repo.updated_at,
-    }));
+    const repos = await fetchRepositories(accessToken, "github");
+    return repos;
   }),
 
   connect: protectedProcedure
@@ -52,7 +42,10 @@ export const repositoryRouter = createTRPCRouter({
         input.repos.map(async (repo) => {
           return ctx.db.repository.upsert({
             where: {
-              githubId: repo.githubId,
+              externalId_provider: {
+                externalId: repo.externalId,
+                provider: repo.provider,
+              },
             },
             update: {
               name: repo.name,
@@ -62,7 +55,8 @@ export const repositoryRouter = createTRPCRouter({
               updatedAt: new Date(),
             },
             create: {
-              githubId: repo.githubId,
+              externalId: repo.externalId,
+              provider: repo.provider,
               name: repo.name,
               fullName: repo.fullName,
               private: repo.private,
