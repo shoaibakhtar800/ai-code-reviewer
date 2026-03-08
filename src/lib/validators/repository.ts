@@ -8,9 +8,14 @@ export const connectRepositorySchema = z.object({
       fullName: z.string(),
       private: z.boolean(),
       htmlUrl: z.string(),
-      provider: z.enum(["github"]).default("github"),
+      provider: z.enum(["github", "gitlab", "bitbucket"]).default("github"),
     }),
   ),
+});
+
+export const getRepositorySchema = z.object({
+  id: z.string(),
+  provider: z.enum(["github", "gitlab", "bitbucket"]),
 });
 
 export type ConnectRepositoryInput = z.infer<typeof connectRepositorySchema>;

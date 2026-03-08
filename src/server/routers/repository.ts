@@ -6,9 +6,21 @@ import { getAccessToken, fetchRepositories } from "@/lib/providers/index";
 import {
   connectRepositorySchema,
   disconnectRepositorySchema,
+  getRepositorySchema,
 } from "@/lib/validators/repository";
 
 export const repositoryRouter = createTRPCRouter({
+  getRepo: protectedProcedure.input(getRepositorySchema).query(async ({ ctx, input }) => {
+    const repo = await ctx.db.repository.findFirst({
+      where: {
+        userId: ctx.session.user.id,
+        id: input.id,
+        provider: input.provider
+      }
+    });
+    return repo;
+  }),
+
   getRepos: protectedProcedure.query(async ({ ctx }) => {
     const repos = await ctx.db.repository.findMany({
       where: {

@@ -10,10 +10,12 @@ import {
   XIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { useConnectRepos } from "../hooks/use-connect-repos";
-import { useDisconnectRepos } from "../hooks/use-disconnect-repos";
-import { useFetchProviderRepos } from "../hooks/use-fetch-provider-repos";
-import { useGetRepos } from "../hooks/use-get-repos";
+import {
+  useConnectRepos,
+  useDisconnectRepos,
+  useFetchProviderRepos,
+  useGetRepos,
+} from "../hooks/use-repository";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,22 +23,24 @@ import { Input } from "@/components/ui/input";
 import { RepositorySelectItem } from "./repository-select-item";
 import { Badge } from "@/components/ui/badge";
 import { RepositoryConnectedCard } from "./repository-connected-card";
-import { ConnectGithub } from "@/components/connect-github";
+import { ConnectProvider } from "@/components/connect-provider";
+import { getProviderDisplayName } from "@/lib/provider-utils";
 
 export const RepositoryList = () => {
   const [selectedRepos, setSelectedRepos] = useState<Set<string>>(new Set());
-  const [showGithubRepos, setShowGithubRepos] = useState(false);
+  const [showProviderRepos, setShowProviderRepos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const provider = "github"; // Default provider
 
   const { data: connectedRepos, isLoading: isLoadingConnectedRepos } =
     useGetRepos();
   const {
-    data: githubRepos,
+    data: providerRepos,
     refetch,
-    isFetching: isFetchingGithubRepos,
-    isLoading: isLoadingGithubRepos,
-    error: githubReposError,
-  } = useFetchProviderRepos(showGithubRepos);
+    isFetching: isFetchingProviderRepos,
+    isLoading: isLoadingProviderRepos,
+    error: providerReposError,
+  } = useFetchProviderRepos(showProviderRepos);
 
   const connectMutation = useConnectRepos();
   const disconnectMutation = useDisconnectRepos();
@@ -45,7 +49,7 @@ export const RepositoryList = () => {
     connectedRepos?.map((repo) => repo.externalId) || [],
   );
 
-  const availableRepos = githubRepos?.filter(
+  const availableRepos = providerRepos?.filter(
     (repo) => !connectedIds.has(repo.externalId),
   );
 
@@ -77,7 +81,7 @@ export const RepositoryList = () => {
       {
         onSuccess: () => {
           setSelectedRepos(new Set());
-          setShowGithubRepos(false);
+          setShowProviderRepos(false);
         },
       },
     );
@@ -112,13 +116,13 @@ export const RepositoryList = () => {
         </div>
         <Button
           onClick={() => {
-            setShowGithubRepos(!showGithubRepos);
+            setShowProviderRepos(!showProviderRepos);
             setSelectedRepos(new Set());
             setSearchQuery("");
           }}
-          variant={showGithubRepos ? "outline" : "default"}
+          variant={showProviderRepos ? "outline" : "default"}
         >
-          {showGithubRepos ? (
+          {showProviderRepos ? (
             <>
               <XIcon className="size-4" />
               Close
@@ -133,12 +137,14 @@ export const RepositoryList = () => {
       </div>
 
       {/* Show Github Repositories */}
-      {showGithubRepos && (
+      {showProviderRepos && (
         <Card className="overflow-hidden">
           <div className="border-b border-border/60 bg-muted/30 px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-semibold">Github Repositories</h2>
+                <h2 className="font-semibold">
+                  {getProviderDisplayName(provider)} Repositories
+                </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   Select repositories to connect to your account.
                 </p>
@@ -147,12 +153,12 @@ export const RepositoryList = () => {
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => refetch()}
-                disabled={isFetchingGithubRepos}
+                disabled={isFetchingProviderRepos}
               >
                 <RefreshCwIcon
                   className={cn(
                     "size-4",
-                    isFetchingGithubRepos && "animate-spin",
+                    isFetchingProviderRepos && "animate-spin",
                   )}
                 />
               </Button>
@@ -160,23 +166,20 @@ export const RepositoryList = () => {
           </div>
 
           <CardContent className="p-0">
-            {isLoadingGithubRepos ? (
+            {isLoadingProviderRepos ? (
               <div className="p-6 space-y-3">
                 {[...Array(10)].map((_, index) => (
                   <Skeleton key={index} className="h-16 w-full rounded-lg" />
                 ))}
               </div>
-            ) : githubReposError ? (
+            ) : providerReposError ? (
               <div className="p-6">
-                {githubReposError.data?.code === "PRECONDITION_FAILED" ? (
-                  <ConnectGithub
-                    title="Github account not connected"
-                    description="Connect your Github account to view your repositories."
-                  />
+                {providerReposError.data?.code === "PRECONDITION_FAILED" ? (
+                  <ConnectProvider provider={provider} />
                 ) : (
                   <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 text-center">
                     <p className="text-sm text-destructive text-center">
-                      {githubReposError.message}
+                      {providerReposError.message}
                     </p>
                   </div>
                 )}
@@ -316,7 +319,10 @@ export const RepositoryList = () => {
                 Connect repositories to start getting AI-powered code reviews on
                 your pull requests.
               </p>
-              <Button className="mt-6" onClick={() => setShowGithubRepos(true)}>
+              <Button
+                className="mt-6"
+                onClick={() => setShowProviderRepos(true)}
+              >
                 <PlusIcon className="size-4" />
                 Add your first repository
               </Button>

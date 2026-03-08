@@ -16,7 +16,7 @@ import { ArrowRightIcon, GlobeIcon, LockIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "../utils";
 
-interface ConnectedGithubRepo {
+interface ConnectedProviderRepo {
   id: string;
   createdAt: Date;
   updatedAt: Date;
@@ -34,7 +34,7 @@ export const RepositoryConnectedCard = ({
   onDisconnect,
   isDisconnecting,
 }: {
-  repo: ConnectedGithubRepo;
+  repo: ConnectedProviderRepo;
   onDisconnect: (id: string) => void;
   isDisconnecting: boolean;
 }) => {
@@ -42,7 +42,7 @@ export const RepositoryConnectedCard = ({
     <Card className="group hover:border-primary/30 transition-all hover:shadow-sm">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
-          <Link href={`/repository/${repo.id}`} className="flex-1 min-w-0">
+          <Link href={`/repositories/${repo.id}`} className="flex-1 min-w-0">
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-lg flex items-center justify-center shrink-0 transition-colors bg-emerald-500/10 group-hover:bg-emerald-500/15">
                 {repo.private ? (

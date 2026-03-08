@@ -1,6 +1,6 @@
 /**
  * Provider-agnostic type definitions for Git hosting providers
- * 
+ *
  * These types abstract away provider-specific implementations (GitHub, GitLab, etc.)
  * allowing the application to work with any Git hosting provider.
  */
@@ -9,7 +9,7 @@
  * Supported Git hosting providers
  * Currently only GitHub is implemented, but designed to extend to GitLab, Bitbucket, etc.
  */
-export type Provider = "github";
+export type Provider = "github" | "gitlab" | "bitbucket";
 
 /**
  * Provider-agnostic repository representation
@@ -70,6 +70,8 @@ export interface PullRequest {
   sourceBranch: string;
   /** Target branch name (branch being merged into) */
   targetBranch: string;
+  /** SHA of the head commit */
+  headSha: string;
   /** Number of lines added */
   additions: number;
   /** Number of lines deleted */
@@ -109,6 +111,21 @@ export interface ProviderOperations {
     token: string,
     owner: string,
     repo: string,
-    state?: "open" | "closed" | "all"
+    state?: "open" | "closed" | "all",
   ) => Promise<PullRequest[]>;
+
+  /**
+   * Fetch a single pull request by number
+   * @param token - Provider access token
+   * @param owner - Repository owner username/organization
+   * @param repo - Repository name
+   * @param prNumber - Pull request number
+   * @returns Provider-agnostic pull request object
+   */
+  fetchPullRequest: (
+    token: string,
+    owner: string,
+    repo: string,
+    prNumber: number,
+  ) => Promise<PullRequest>;
 }

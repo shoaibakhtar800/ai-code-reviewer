@@ -11,6 +11,7 @@ import {
   getGitHubAccessToken,
   fetchGitHubRepos,
   fetchPullRequests as fetchGitHubPullRequests,
+  fetchPullRequest as fetchGitHubPullRequest,
 } from "./github";
 
 /**
@@ -27,7 +28,11 @@ export function getProviderOperations(provider: Provider): ProviderOperations {
         getAccessToken: getGitHubAccessToken,
         fetchRepositories: fetchGitHubRepos,
         fetchPullRequests: fetchGitHubPullRequests,
+        fetchPullRequest: fetchGitHubPullRequest,
       };
+    case "gitlab":
+    case "bitbucket":
+      throw new Error(`Provider ${provider} not yet implemented`);
     default:
       // TypeScript exhaustiveness check - should never reach here
       const _exhaustive: never = provider;
@@ -85,4 +90,25 @@ export async function fetchPullRequests(
 ): Promise<PullRequest[]> {
   const operations = getProviderOperations(provider);
   return operations.fetchPullRequests(token, owner, repo, state);
+}
+
+/**
+ * Fetch a single pull request by number
+ * 
+ * @param token - Provider access token
+ * @param owner - Repository owner username/organization
+ * @param repo - Repository name
+ * @param provider - The Git hosting provider
+ * @param prNumber - Pull request number
+ * @returns Provider-agnostic pull request object
+ */
+export async function fetchPullRequest(
+  token: string,
+  owner: string,
+  repo: string,
+  provider: Provider,
+  prNumber: number,
+): Promise<PullRequest> {
+  const operations = getProviderOperations(provider);
+  return operations.fetchPullRequest(token, owner, repo, prNumber);
 }

@@ -169,6 +169,7 @@ export function mapGitHubPRToPullRequest(pr: GitHubPullRequest): PullRequest {
     draft: pr.draft,
     sourceBranch: pr.head.ref,
     targetBranch: pr.base.ref,
+    headSha: pr.head.sha,
     additions: pr.additions,
     deletions: pr.deletions,
     changedFiles: pr.changed_files,
