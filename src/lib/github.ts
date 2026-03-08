@@ -1,5 +1,33 @@
 import { prisma } from "@/server/db";
 
+export interface GitHubUser {
+  login: string;
+  avatar_url: string;
+}
+
+export interface GitHubPullRequest {
+  id: number;
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  html_url: string;
+  user: GitHubUser;
+  created_at: string;
+  updated_at: string;
+  merged_at: string | null;
+  draft: boolean;
+  head: {
+    ref: string;
+    sha: string;
+  };
+  base: {
+    ref: string;
+  };
+  additions: number;
+  deletions: number;
+  changed_files: number;
+}
+
 export interface GitHubRepo {
   id: number;
   name: string;
@@ -74,3 +102,12 @@ export async function fetchGitHubRepos(token: string): Promise<GitHubRepo[]> {
     return [];
   }
 }
+
+export const fetchPullRequests = async (
+  accessToken: string,
+  owner: string,
+  repo: string,
+  state: "open" | "closed" | "all" = "open"
+): Promise<GitHubPullRequest> => {
+  const response = await 
+} 
