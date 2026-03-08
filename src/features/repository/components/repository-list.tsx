@@ -20,6 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { RepositorySelectItem } from "./repository-select-item";
 import { Badge } from "@/components/ui/badge";
+import { RepositoryConnectedCard } from "./repository-connected-card";
+import { ConnectGithub } from "@/components/connect-github";
 
 interface RepositoryListProps {
   user: {
@@ -179,7 +181,10 @@ export const RepositoryList = ({ user }: RepositoryListProps) => {
             ) : githubReposError ? (
               <div className="p-6">
                 {githubReposError.data?.code === "PRECONDITION_FAILED" ? (
-                  <Button>Connect</Button>
+                  <ConnectGithub
+                    title="Github account not connected"
+                    description="Connect your Github account to view your repositories."
+                  />
                 ) : (
                   <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 text-center">
                     <p className="text-sm text-destructive text-center">
@@ -236,7 +241,7 @@ export const RepositoryList = ({ user }: RepositoryListProps) => {
                     )}
                   </div>
                 </div>
-                <div className="max-h-[400px] overflow-y-auto">
+                <div className="max-h-100 overflow-y-auto">
                   {filteredAvailableRepos?.length === 0 ? (
                     <div className="py-12 text-center">
                       <p className="text-sm text-muted-foreground">
@@ -313,7 +318,7 @@ export const RepositoryList = ({ user }: RepositoryListProps) => {
         ) : connectedRepos?.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
-              <div className="mx-auto h-14 rounded-full bg-muted flex items-center justify-center">
+              <div className="mx-auto h-14 rounded-md bg-muted flex items-center justify-center">
                 <FolderGit2Icon className="size-7 text-muted-foreground" />
               </div>
               <p className="mt-4 font-medium">
@@ -332,7 +337,7 @@ export const RepositoryList = ({ user }: RepositoryListProps) => {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {connectedRepos?.map((repo) => (
-              <ConnectedRepoCard
+              <RepositoryConnectedCard
                 key={repo.githubId}
                 repo={repo}
                 onDisconnect={handleDisconnect}

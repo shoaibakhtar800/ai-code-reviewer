@@ -1,4 +1,4 @@
-import { RepositoryList } from "@/features/repositories/components/repository-list";
+import { RepositoryList } from "@/features/repository/components/repository-list";
 import { requireAuth } from "@/lib/auth-server";
 
 export default async function RepositoriesPage() {

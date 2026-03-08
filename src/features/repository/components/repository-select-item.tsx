@@ -1,4 +1,4 @@
-import { GitHubRepo } from "@/features/repositories/types";
+import { GitHubRepo } from "@/features/repository/types";
 import { languageColors } from "../constants";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
