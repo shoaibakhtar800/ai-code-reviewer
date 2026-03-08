@@ -23,19 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { RepositoryConnectedCard } from "./repository-connected-card";
 import { ConnectGithub } from "@/components/connect-github";
 
-interface RepositoryListProps {
-  user: {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    email: string;
-    emailVerified: boolean;
-    name: string;
-    image?: string | null | undefined;
-  };
-}
-
-export const RepositoryList = ({ user }: RepositoryListProps) => {
+export const RepositoryList = () => {
   const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set());
   const [showGithubRepos, setShowGithubRepos] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
