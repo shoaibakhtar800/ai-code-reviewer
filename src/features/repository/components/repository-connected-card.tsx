@@ -101,7 +101,7 @@ export const RepositoryConnectedCard = ({
 
         <div className="mt-4 pt-4 border-t border-border/60 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            Connected {formatDate(repo.createdAt)}
+            Connected {formatDate(repo.createdAt.toISOString())}
           </span>
           <Link href={`/repository/${repo.id}`}>
             <Button

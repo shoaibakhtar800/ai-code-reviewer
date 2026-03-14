@@ -6,7 +6,8 @@ import {
   isYesterday,
 } from "date-fns";
 
-export const formatDate = (date: Date) => {
+export const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
   if (isToday(date)) return "today";
   if (isYesterday(date)) return "yesterday";
 

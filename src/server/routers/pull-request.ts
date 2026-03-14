@@ -79,7 +79,7 @@ export const pullRequestRouter = createTRPCRouter({
         htmlUrl: pr.htmlUrl,
         author: {
           login: pr.author.login,
-          avatar: pr.author.avatarUrl,
+          avatarUrl: pr.author.avatarUrl,
         },
         headRef: pr.sourceBranch,
         headSha: pr.headSha,

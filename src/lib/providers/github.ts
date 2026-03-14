@@ -144,9 +144,13 @@ export const fetchPullRequests = async (
   }
 
   const data = (await response.json()) as GitHubPullRequest[];
-  
+
+  const prDetailed = await Promise.all(
+    data.map((pr) => fetchPullRequest(accessToken, owner, repo, pr.number)),
+  );
+
   // Map GitHub-specific types to provider-agnostic types
-  return data.map(mapGitHubPRToPullRequest);
+  return prDetailed;
 };
 
 /**
@@ -197,7 +201,7 @@ export const fetchPullRequest = async (
   }
 
   const data = (await response.json()) as GitHubPullRequest;
-  
+
   // Map GitHub-specific type to provider-agnostic type
   return mapGitHubPRToPullRequest(data);
 };
