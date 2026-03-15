@@ -26,6 +26,8 @@ import {
   useGetPullRequest,
   useGetPullRequestFiles,
 } from "../../hooks/use-pull-request";
+import { TabButton } from "@/components/tab-button";
+import { useState } from "react";
 
 const PRStatusBadge = ({
   state,
@@ -118,6 +120,8 @@ export default function PullRequestDetail({
   repositoryId: string;
   prNumber: number;
 }) {
+  const [activeTab, setActiveTab] = useState<"review" | "files">("review");
+
   const pullRequestQuery = useGetPullRequest(repositoryId, prNumber, true);
 
   const pullRequestFilesQuery = useGetPullRequestFiles(
@@ -302,6 +306,18 @@ export default function PullRequestDetail({
           </div>
         </CardContent>
       </Card>
+
+      <div className="border-b border-border/60">
+        <div className="flex items-center gap-1">
+          <TabButton
+            active={true}
+            onClick={() => {}}
+            icon={FileTextIcon}
+            label="Changed Files"
+            count={pullRequestFilesQuery.data?.length}
+          />
+        </div>
+      </div>
     </div>
   );
 }
