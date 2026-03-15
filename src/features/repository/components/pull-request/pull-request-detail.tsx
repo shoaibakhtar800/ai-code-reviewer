@@ -7,11 +7,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
-  ArrowLeftIcon,
+  ClockIcon,
+  DotIcon,
   ExternalLinkIcon,
   GitMergeIcon,
   GitPullRequestIcon,
   XCircleIcon,
+  ArrowLeftIcon,
+  GitBranchIcon,
+  ArrowRightIcon,
+  PlusIcon,
+  LucideIcon,
+  MinusIcon,
+  FileTextIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -72,6 +80,36 @@ const PRStatusBadge = ({
 
   return null;
 };
+
+function StartItem({
+  icon: Icon,
+  value,
+  label,
+  colorClass,
+  bgClass,
+}: {
+  icon: LucideIcon;
+  value: number;
+  label?: string;
+  colorClass: string;
+  bgClass: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className={cn("p-1.5 rounded-md", bgClass)}>
+        <Icon className={cn("size-3.5", colorClass)} />
+      </div>
+      <div>
+        <p className={cn("text-sm font-semibold tabular-nums", colorClass)}>
+          {value.toLocaleString()}
+        </p>
+        {label && (
+          <p className={cn("text-xs font-medium", colorClass)}>{label}</p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function PullRequestDetail({
   repositoryId,
@@ -136,7 +174,7 @@ export default function PullRequestDetail({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <Link href={`/repositories/${repositoryId}`}>
           <Button variant={"outline"} size={"icon"} className="shrink-0 mt-1">
             <ArrowLeftIcon className="size-4" />
@@ -145,7 +183,7 @@ export default function PullRequestDetail({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-wrap">
                 <div
                   className={cn(
                     "p-2 rounded-lg shrink-0",
@@ -199,18 +237,71 @@ export default function PullRequestDetail({
           <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground flex-wrap">
             <span className="flex items-center gap-2">
               <Avatar className="size-5 ring-1 ring-border">
-                <AvatarImage src={pullRequestQuery.data.user.avatarUrl} />
-                <AvatarFallback>
-                  {pullRequestQuery.data.user.login.charAt(0).toUpperCase()}
+                <AvatarImage src={pullRequestQuery.data.author.avatarUrl} />
+                <AvatarFallback className="text-[10px]">
+                  {pullRequestQuery.data.author.login.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="font-medium text-foreground">
-                {pullRequestQuery.data.user.login}
+              <span className="text-sm text-foreground font-medium">
+                {pullRequestQuery.data.author.login}
               </span>
+            </span>
+            <DotIcon className="size-6 text-muted-foreground -mx-2" />
+            <span className="flex items-center gap-1.5">
+              <ClockIcon className="size-4" />
             </span>
           </div>
         </div>
       </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <div className="flex items-center divide-x divide-border/60">
+            <div className="flex-1 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted">
+                  <GitBranchIcon className="size-4 text-muted-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Merged request
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <code className="text-xs bg-muted gap-2 text-muted-foreground flex items-center px-2 py-0.5 rounded-md font-mono truncate">
+                      {pullRequestQuery.data.headRef}
+                    </code>
+                    <ArrowRightIcon className="size-4 text-muted-foreground/70" />
+                    <code className="text-xs bg-muted gap-2 text-muted-foreground flex items-center px-2 py-0.5 rounded-md font-mono truncate">
+                      {pullRequestQuery.data.baseRef}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6 px-6 py-4">
+              <StartItem
+                icon={PlusIcon}
+                value={pullRequestQuery.data.additions}
+                colorClass="text-emerald-600 dark:text-emerald-400"
+                bgClass="bg-emerald-500/10"
+              />
+              <StartItem
+                icon={MinusIcon}
+                value={pullRequestQuery.data.deletions}
+                colorClass="text-red-600 dark:text-red-400"
+                bgClass="bg-red-500/10"
+              />
+              <StartItem
+                icon={FileTextIcon}
+                value={pullRequestQuery.data.changedFiles}
+                colorClass="text-muted-foreground dark:text-muted-foreground"
+                bgClass="bg-muted"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

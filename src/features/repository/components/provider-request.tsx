@@ -153,7 +153,9 @@ export const ProviderRequest = ({ pr, repositoryId }: pullRequestProps) => {
               <div className="flex items-center gap-2 text-sm">
                 <code className="text-xs bg-muted gap-2 text-muted-foreground flex items-center px-2 py-0.5 rounded-md font-mono truncate">
                   {pr.headRef}
-                  <ArrowRightIcon className="size-4 mx-1.5 text-muted-foreground/70" />
+                </code>
+                <ArrowRightIcon className="size-4 text-muted-foreground/70" />
+                <code className="text-xs bg-muted gap-2 text-muted-foreground flex items-center px-2 py-0.5 rounded-md font-mono truncate">
                   {pr.baseRef}
                 </code>
                 <div className="flex items-center gap-3">
