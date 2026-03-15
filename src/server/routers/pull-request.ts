@@ -6,6 +6,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import {
   fetchPullRequest,
+  fetchPullRequestFiles,
   fetchPullRequests,
   getAccessToken,
 } from "@/lib/providers";
@@ -165,5 +166,50 @@ export const pullRequestRouter = createTRPCRouter({
         mergedAt: pr.mergedAt,
         review: existingReview,
       };
+    }),
+
+  files: protectedProcedure
+    .input(pullRequestGetSchema)
+    .query(async ({ ctx, input }) => {
+      const repository = await ctx.db.repository.findUnique({
+        where: { id: input.repositoryId, userId: ctx.user.id },
+      });
+
+      if (!repository) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repository not found",
+        });
+      }
+
+      const accessToken = await getAccessToken(
+        ctx.user.id,
+        repository.provider as Provider,
+      );
+
+      if (!accessToken) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `${repository.provider.charAt(0).toUpperCase() + repository.provider.slice(1)} account not connected`,
+        });
+      }
+
+      const [owner, repo] = repository.fullName.split("/");
+      if (!owner || !repo) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid repository name",
+        });
+      }
+
+      const files = await fetchPullRequestFiles(
+        accessToken,
+        owner,
+        repo,
+        repository.provider as Provider,
+        input.prNumber,
+      );
+
+      return files;
     }),
 });

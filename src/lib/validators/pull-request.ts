@@ -7,5 +7,5 @@ export const pullRequestListSchema = z.object({
 
 export const pullRequestGetSchema = z.object({
   repositoryId: z.string(),
-  prNumber: z.number(),
+  prNumber: z.coerce.number(),
 });

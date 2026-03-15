@@ -1,5 +1,23 @@
 import { prisma } from "@/server/db";
-import type { Repository, PullRequest } from "./types";
+import type { Repository, PullRequest, PullRequestFile } from "./types";
+
+export interface GitHubPullRequestFile {
+  sha: string;
+  filename: string;
+  status:
+    | "added"
+    | "modified"
+    | "removed"
+    | "renamed"
+    | "copied"
+    | "changed"
+    | "unchanged";
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string;
+  previous_filename?: string;
+}
 
 // GitHub-specific interfaces for internal API response handling
 export interface GitHubUser {
@@ -204,4 +222,64 @@ export const fetchPullRequest = async (
 
   // Map GitHub-specific type to provider-agnostic type
   return mapGitHubPRToPullRequest(data);
+};
+
+/**
+ * Maps a GitHub pull request file to provider-agnostic PullRequestFile type
+ */
+export function mapGitHubPullRequestFileToPullRequestFile(
+  file: GitHubPullRequestFile,
+): PullRequestFile {
+  return {
+    sha: file.sha,
+    filename: file.filename,
+    status: file.status,
+    additions: file.additions,
+    deletions: file.deletions,
+    changes: file.changes,
+    patch: file.patch,
+    previousFilename: file.previous_filename,
+  };
+}
+
+/**
+ * Fetches all files in a GitHub pull request
+ */
+export const fetchPullRequestFiles = async (
+  accessToken: string,
+  owner: string,
+  repo: string,
+  prNumber: number,
+): Promise<PullRequestFile[]> => {
+  const files: GitHubPullRequestFile[] = [];
+  let page = 1;
+  const perPage = 100;
+
+  while (true) {
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}/files?per_page=${perPage}&page=${page}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.status}`);
+    }
+
+    const data = (await response.json()) as GitHubPullRequestFile[];
+    files.push(...data);
+
+    if (data.length < perPage) {
+      break;
+    }
+
+    page++;
+  }
+
+  // Map GitHub-specific type to provider-agnostic type
+  return files.map(mapGitHubPullRequestFileToPullRequestFile);
 };

@@ -128,4 +128,49 @@ export interface ProviderOperations {
     repo: string,
     prNumber: number,
   ) => Promise<PullRequest>;
+
+  /**
+   * Fetch all files in a pull request
+   * @param token - Provider access token
+   * @param owner - Repository owner username/organization
+   * @param repo - Repository name
+   * @param prNumber - Pull request number
+   * @returns Array of provider-agnostic pull request file objects
+   */
+  fetchPullRequestFiles: (
+    token: string,
+    owner: string,
+    repo: string,
+    prNumber: number,
+  ) => Promise<PullRequestFile[]>;
+}
+
+/**
+ * Provider-agnostic pull request file representation
+ * Maps from provider-specific pull request file types to a common interface
+ */
+export interface PullRequestFile {
+  /** SHA of the file's content */
+  sha: string;
+  /** File name */
+  filename: string;
+  /** Status of the file in the pull request */
+  status:
+    | "added"
+    | "modified"
+    | "removed"
+    | "renamed"
+    | "copied"
+    | "changed"
+    | "unchanged";
+  /** Number of lines added */
+  additions: number;
+  /** Number of lines deleted */
+  deletions: number;
+  /** Total number of changes */
+  changes: number;
+  /** Patch content */
+  patch?: string;
+  /** Previous file name (for renamed files) */
+  previousFilename?: string;
 }
