@@ -27,7 +27,8 @@ import {
   useGetPullRequestFiles,
 } from "../../hooks/use-pull-request";
 import { TabButton } from "@/components/tab-button";
-import { useState } from "react";
+import { act, useState } from "react";
+import { DiffViewer } from "./diff-viewer";
 
 const PRStatusBadge = ({
   state,
@@ -310,14 +311,44 @@ export default function PullRequestDetail({
       <div className="border-b border-border/60">
         <div className="flex items-center gap-1">
           <TabButton
-            active={true}
-            onClick={() => {}}
+            active={activeTab === "files"}
+            onClick={() => setActiveTab("files")}
             icon={FileTextIcon}
             label="Changed Files"
             count={pullRequestFilesQuery.data?.length}
           />
         </div>
       </div>
+
+      {activeTab === "files" && (
+        <div>
+          {pullRequestFilesQuery.isLoading ? (
+            <div className="space-y-3">
+              {[
+                ...Array(3).map((_, i) => (
+                  <Skeleton key={i} className="h-32 w-full rounded-xl" />
+                )),
+              ]}
+            </div>
+          ) : pullRequestFilesQuery.error ? (
+            <Card className="border-destructive/50">
+              <CardContent className="py-12 text-center">
+                <div className="mx-auto size-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <XCircleIcon className="size-6 text-destructive" />
+                </div>
+                <p className="mt-4 font-medium text-destructive">
+                  No files changed.
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {pullRequestFilesQuery?.error?.message}
+                </p>
+              </CardContent>
+            </Card>
+          ) : pullRequestFilesQuery.data ? (
+            <DiffViewer files={pullRequestFilesQuery.data} />
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
