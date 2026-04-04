@@ -2,12 +2,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
+  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  CopyIcon,
   FileEditIcon,
   FileMinusIcon,
   FilePlusIcon,
@@ -78,6 +80,43 @@ const getStatusConfig = (status: string) => {
         bg: "bg-muted",
       };
   }
+};
+
+interface LineInfo {
+  type: "addition" | "deletion" | "context" | "hunk";
+  isHunk: boolean;
+}
+
+const parseLine = (
+  line: string,
+  _oldNum: number,
+  _newNum: number,
+): LineInfo => {
+  if (line.startsWith("@@")) {
+    return {
+      type: "hunk",
+      isHunk: true,
+    };
+  }
+
+  if (line.startsWith("+")) {
+    return {
+      type: "addition",
+      isHunk: false,
+    };
+  }
+
+  if (line.startsWith("-")) {
+    return {
+      type: "deletion",
+      isHunk: false,
+    };
+  }
+
+  return {
+    type: "context",
+    isHunk: false,
+  };
 };
 
 export function DiffViewer({ files }: DiffViewerProps) {
@@ -244,34 +283,183 @@ function DiffFileCard({
             {Array.from({ length: Math.min(file.additions, 5) }).map(
               (_, index) => (
                 <div
-                  key={index}
-                  className="size-1.5 rounded-full bg-emerald-500/50"
+                  key={`add-${index}`}
+                  className="w-1.5 h-3 rounded-sm bg-emerald-500"
                 ></div>
               ),
             )}
-            {file.additions > 5 && (
-              <span className="text-xs text-muted-foreground">
-                +{file.additions - 5}
-              </span>
-            )}
-          </div>
-          <div className="hidden sm:flex items-center gap-0.5">
             {Array.from({ length: Math.min(file.deletions, 5) }).map(
               (_, index) => (
                 <div
-                  key={index}
-                  className="size-1.5 rounded-full bg-red-500/50"
+                  key={`del-${index}`}
+                  className="w-1.5 h-3 rounded-sm bg-red-500"
                 ></div>
               ),
             )}
-            {file.deletions > 5 && (
-              <span className="text-xs text-muted-foreground">
-                -{file.deletions - 5}
-              </span>
+            {file.additions + file.deletions === 0 && (
+              <div className="w-1.5 h-3 rounded-sm bg-muted-foreground" />
             )}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs tabular-nums">
+            <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+              <PlusIcon className="size-3" />
+              {file.additions}
+            </span>
+            <span className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400">
+              <MinusIcon className="size-3" />
+              {file.deletions}
+            </span>
           </div>
         </div>
       </Button>
+
+      {expended && (
+        <CardContent className="p-0 border-t border-border/60">
+          {file.patch ? (
+            <div className="relative">
+              <Button
+                variant={"ghost"}
+                size={"icon-sm"}
+                className="absolute top-2 right-2 z-10 opacity-80 hover:opacity-100 focus:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyFilename();
+                }}
+              >
+                {copied ? (
+                  <CheckIcon className="size-3" />
+                ) : (
+                  <CopyIcon className="size-3" />
+                )}
+              </Button>
+
+              <DiffContent patch={file.patch} />
+            </div>
+          ) : (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              <FileTextIcon className="size-8 mx-auto mb-2 opacity-50" />
+              <p>No differences available for this file.</p>
+              <p className="text-xs mt-1">
+                It may have been renamed or deleted, or it may be a binary file.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 }
+
+function DiffContent({ patch }: { patch: string }) {
+  const lines = patch.split("\n");
+  let oldLineNum = 0;
+  let newLineNum = 0;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs font-mono">
+        <tbody>
+          {lines.map((line, index) => {
+            const lineInfo = parseLine(line, oldLineNum, newLineNum);
+
+            if (lineInfo.isHunk) {
+              const match = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);
+              if (match?.[1] && match?.[2]) {
+                oldLineNum = parseInt(match[1], 10) - 1;
+                newLineNum = parseInt(match[2], 10) - 1;
+              }
+            } else if (lineInfo.type === "deletion") {
+              oldLineNum++;
+            } else if (lineInfo.type === "addition") {
+              newLineNum++;
+            } else if (lineInfo.type === "context") {
+              oldLineNum++;
+              newLineNum++;
+            }
+
+            return (
+              <DiffTableRow
+                key={index}
+                line={line}
+                oldNum={lineInfo.type === "addition" ? null : oldLineNum}
+                newNum={lineInfo.type === "deletion" ? null : newLineNum}
+                lineInfo={lineInfo}
+              />
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const DiffTableRow = ({
+  line,
+  lineInfo,
+  oldNum,
+  newNum,
+}: {
+  line: string;
+  lineInfo: LineInfo;
+  oldNum: number | null;
+  newNum: number | null;
+}) => {
+  const bgClass = {
+    addition: "bg-emerald-500/10",
+    deletion: "bg-red-500/10",
+    hunk: "bg-blue-500/10",
+    context: "",
+  }[lineInfo.type];
+
+  const textClass = {
+    addition: "text-emerald-700 dark:text-emerald-300",
+    deletion: "text-red-700 dark:text-red-300",
+    hunk: "text-blue-600 dark:text-blue-400",
+    context: "text-foreground",
+  }[lineInfo.type];
+
+  const lineNumClass = {
+    addition: "bg-emerald-500/5 text-emerald-600/70 dark:text-emerald-400/70",
+    deletion: "bg-red-500/5 text-red-600/70 dark:text-red-400/70",
+    hunk: "bg-blue-500/5",
+    context: "text-muted-foreground/50",
+  }[lineInfo.type];
+
+  if (lineInfo.isHunk) {
+    return (
+      <tr className={bgClass}>
+        <td
+          colSpan={3}
+          className={cn("px-4 py-1.5 text-xs", textClass, lineNumClass)}
+        >
+          {line}
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr className={cn("group", bgClass)}>
+      <td
+        className={cn(
+          "w-12 px-2 py-0.5 text-right select-none border-r border-border/30",
+          lineNumClass,
+        )}
+      >
+        {oldNum || ""}
+      </td>
+      <td
+        className={cn(
+          "w-12 px-2 py-0.5 text-right select-none border-r border-border/30",
+          lineNumClass,
+        )}
+      >
+        {newNum || ""}
+      </td>
+      <td className={cn("px-4 py-0.5 whitespace-pre", textClass)}>
+        {line.slice(1) || " "}
+      </td>
+    </tr>
+  );
+};
