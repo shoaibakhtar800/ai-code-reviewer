@@ -1,33 +1,43 @@
 "use client";
 
+import { TabButton } from "@/components/tab-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ReviewStatus } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
 import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
   ClockIcon,
   DotIcon,
   ExternalLinkIcon,
+  FileTextIcon,
+  GitBranchIcon,
   GitMergeIcon,
   GitPullRequestIcon,
-  XCircleIcon,
-  ArrowLeftIcon,
-  GitBranchIcon,
-  ArrowRightIcon,
-  PlusIcon,
+  Loader2Icon,
   LucideIcon,
   MinusIcon,
-  FileTextIcon,
+  PlusIcon,
+  ScanSearchIcon,
+  SparklesIcon,
+  XCircleIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import {
   useGetPullRequest,
   useGetPullRequestFiles,
 } from "../../hooks/use-pull-request";
-import { TabButton } from "@/components/tab-button";
-import { act, useState } from "react";
+import {
+  useGetLatestReviewForPR,
+  useTriggerReview,
+} from "../../hooks/use-review";
+import { formatDate } from "../../utils";
 import { DiffViewer } from "./diff-viewer";
 
 const PRStatusBadge = ({
@@ -130,6 +140,18 @@ export default function PullRequestDetail({
     prNumber,
     true,
   );
+
+  const latestReviewQuery = useGetLatestReviewForPR(
+    repositoryId,
+    prNumber,
+    !isNaN(prNumber),
+  );
+
+  const triggerReview = useTriggerReview(latestReviewQuery, pullRequestQuery);
+
+  const isReviewInProgress =
+    latestReviewQuery.data?.status === ReviewStatus.PENDING ||
+    latestReviewQuery.data?.status === ReviewStatus.PROCESSING;
 
   if (pullRequestQuery.isLoading) {
     return (
@@ -304,12 +326,63 @@ export default function PullRequestDetail({
                 bgClass="bg-muted"
               />
             </div>
+
+            <div className="px-6 py-4 flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-lg px-3 py-1.5">
+                <ReviewStatusBadge
+                  status={latestReviewQuery.data?.status ?? null}
+                  completedAt={
+                    latestReviewQuery.data?.status === "COMPLETED"
+                      ? latestReviewQuery.data.createdAt
+                      : null
+                  }
+                />
+                {!isReviewInProgress && (
+                  <div className="h-4 w-px bg-border"></div>
+                )}
+                {isReviewInProgress ? null : (
+                  <Button
+                    variant={"outline"}
+                    size={"sm"}
+                    className="gap-1.5 h-auto py-1 px-2 text-xs"
+                    onClick={() => {
+                      triggerReview.mutate({
+                        repositoryId,
+                        prNumber,
+                      });
+                    }}
+                    disabled={triggerReview.isPending}
+                  >
+                    <SparklesIcon
+                      className={`size-4 ${triggerReview.isPending ? "animate-pulse" : ""}`}
+                    />
+                    {latestReviewQuery.data?.status === "COMPLETED"
+                      ? "Review Again"
+                      : "Review"}
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="border-b border-border/60">
         <div className="flex items-center gap-1">
+          <TabButton
+            active={activeTab === "review"}
+            onClick={() => setActiveTab("review")}
+            icon={ScanSearchIcon}
+            label="Review"
+            count={
+              latestReviewQuery.data?.status === ReviewStatus.COMPLETED
+                ? Array.isArray(latestReviewQuery.data.comments)
+                  ? latestReviewQuery.data.comments.length
+                  : 0
+                : 0
+            }
+          />
+
           <TabButton
             active={activeTab === "files"}
             onClick={() => setActiveTab("files")}
@@ -352,3 +425,69 @@ export default function PullRequestDetail({
     </div>
   );
 }
+
+const ReviewStatusBadge = ({
+  status,
+  completedAt,
+}: {
+  status: ReviewStatus | null;
+  completedAt: Date | null;
+}) => {
+  if (!status) {
+    return (
+      <Badge
+        variant="outline"
+        className="gap-1.5 border bg-muted text-muted-foreground"
+      >
+        <ClockIcon className="size-3" />
+        <span className="text-sm">No review yet</span>
+      </Badge>
+    );
+  }
+
+  const config = {
+    [ReviewStatus.COMPLETED]: {
+      icon: CheckCircleIcon,
+      label: completedAt
+        ? `AI Review completed · ${formatDate(completedAt.toISOString())}`
+        : "AI Review completed",
+      className:
+        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    },
+    [ReviewStatus.PROCESSING]: {
+      icon: Loader2Icon,
+      label: "Analyzing code…",
+      className:
+        "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+      spin: true,
+    },
+    [ReviewStatus.PENDING]: {
+      icon: ClockIcon,
+      label: "Queued for review",
+      className:
+        "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    },
+    [ReviewStatus.FAILED]: {
+      icon: XCircleIcon,
+      label: "Review failed",
+      className:
+        "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+    },
+  }[status] ?? {
+    icon: ClockIcon,
+    label: "Not reviewed",
+    className: "bg-muted text-muted-foreground",
+  };
+
+  const Icon = config.icon;
+
+  return (
+    <Badge
+      variant={"outline"}
+      className={cn("gap-1.5 border", config.className)}
+    >
+      <Icon className={cn("size-3", config.spin && "animate-spin")} />
+      <span className="text-sm">{config.label}</span>
+    </Badge>
+  );
+};
