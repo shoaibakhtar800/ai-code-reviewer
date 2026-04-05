@@ -1,12 +1,8 @@
+import { ReviewStatus } from "@/generated/prisma/enums";
+import { fetchPullRequestFiles, getAccessToken } from "@/lib/providers";
+import { Provider } from "@/lib/providers/types";
 import { prisma } from "@/server/db";
 import { inngest } from "../client";
-import { ReviewStatus } from "@/generated/prisma/enums";
-import {
-  fetchPullRequest,
-  fetchPullRequestFiles,
-  getAccessToken,
-} from "@/lib/providers";
-import { Provider } from "@/lib/providers/types";
 
 export type ReviewPREvent = {
   name: "review/pr.requested";
