@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReviewStatus } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNowStrict } from "date-fns";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -37,7 +38,6 @@ import {
   useGetLatestReviewForPR,
   useTriggerReview,
 } from "../../hooks/use-review";
-import { formatDate } from "../../utils";
 import { DiffViewer } from "./diff-viewer";
 
 const PRStatusBadge = ({
@@ -393,6 +393,42 @@ export default function PullRequestDetail({
         </div>
       </div>
 
+      {activeTab === "review" && (
+        <div>
+          {latestReviewQuery.data ? (
+            <></>
+          ) : (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <div className="mx-auto size-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ScanSearchIcon className="size-7 text-primary" />
+                </div>
+                <p className="mt-4 font-medium">No review found.</p>
+                <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                  Click &quot;Run AI Review&quot; to analyze this pull request
+                  for bugs, security issues, and improvements.
+                </p>
+                <Button
+                  className="mt-6"
+                  onClick={() => {
+                    triggerReview.mutate({
+                      repositoryId,
+                      prNumber,
+                    });
+                  }}
+                  disabled={triggerReview.isPending}
+                >
+                  <SparklesIcon
+                    className={`size-4 ${triggerReview.isPending ? "animate-pulse" : ""}`}
+                  />
+                  Run AI Review
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {activeTab === "files" && (
         <div>
           {pullRequestFilesQuery.isLoading ? (
@@ -449,7 +485,7 @@ const ReviewStatusBadge = ({
     [ReviewStatus.COMPLETED]: {
       icon: CheckCircleIcon,
       label: completedAt
-        ? `AI Review completed · ${formatDate(completedAt.toISOString())}`
+        ? `AI Review completed · ${formatDistanceToNowStrict(completedAt, { addSuffix: true })}`
         : "AI Review completed",
       className:
         "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
