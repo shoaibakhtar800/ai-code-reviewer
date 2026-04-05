@@ -88,4 +88,58 @@ export const reviewRouter = createTRPCRouter({
 
       return { reviewId: review.id };
     }),
+
+  getById: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const review = await ctx.db.review.findUnique({
+        where: {
+          id: input.id,
+          userId: ctx.user.id,
+        },
+        include: {
+          repository: true,
+        },
+      });
+
+      if (!review) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Review not found",
+        });
+      }
+
+      return review;
+    }),
+
+  getAll: protectedProcedure
+    .input(
+      z.object({
+        repositoryId: z.string().optional(),
+        limit: z.number().min(1).max(50).default(20),
+        cursor: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const reviews = await ctx.db.review.findMany({
+        where: {
+          userId: ctx.user.id,
+          ...(input.repositoryId && { repositoryId: input.repositoryId }),
+        },
+        include: {
+          repository: true,
+        },
+        take: input.limit,
+        cursor: input.cursor ? { id: input.cursor } : undefined,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return reviews;
+    }),
 });
