@@ -142,4 +142,26 @@ export const reviewRouter = createTRPCRouter({
 
       return reviews;
     }),
+
+  getLatestForPR: protectedProcedure
+    .input(
+      z.object({
+        repositoryId: z.string(),
+        prNumber: z.number(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const review = await ctx.db.review.findFirst({
+        where: {
+          repositoryId: input.repositoryId,
+          prNumber: input.prNumber,
+          userId: ctx.user.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return review;
+    }),
 });
